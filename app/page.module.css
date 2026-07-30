@@ -139,4 +139,16 @@ a.secondary {
     --button-secondary-hover: #1a1a1a;
     --button-secondary-border: #1a1a1a;
   }
+
+
+  .dialog {
+  margin:auto;  
+  transform: translateY(0);
+  opacity: 1;
+  transition: transform 300ms, opacity 300ms, display 300ms allow-discrete;
+}
+.dialog:not([open]) { transform: translateY(20px); opacity: 0; }
+@starting-style {
+  .dialog[open] { transform: translateY(20px); opacity: 0; }
+}
 }
