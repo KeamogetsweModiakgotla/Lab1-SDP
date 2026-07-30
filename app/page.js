@@ -1,28 +1,68 @@
 "use client";
 
 import styles from "./page.module.css";
-import { useState, useRef } from "react";
+import { STATUSES } from "@/lib/constants";
+import { useState, useRef, useEffect } from "react";
+
 
 export default function Home() {
-  const tasks = [
-    {
-      id: 1,
-      title: "Analysis assignment",
-      description: "coms 3 subject",
-      dueDate: "2026-07-31",
-      topic: "fractals",
-      status: "complete",
-    },
-  ];
-  const [currTasks, setCurrTasks] = useState(tasks);
+
+  const [currTasks, setCurrTasks] = useState([]);
   const [currTitle, setTitle] = useState("");
   const [currDescription, setDescription] = useState("");
   const [currDueDate, setDueDate] = useState("");
   const [currTopic, setTopic] = useState("");
   const [currStatus, setStatus] = useState("todo");
-  const STATUSES = ["todo", "in-progress", "complete"];
+
 
   const dialogRef = useRef(null);
+
+  useEffect(() => {
+    fetch("/api/tasks")
+      .then((r) => r.json())
+      .then(setCurrTasks);
+  }, []);
+
+  async function handleAdd() {
+    if (currTitle.trim() === "") {
+      return;
+    }
+
+    const res = await fetch("/api/tasks", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: currTitle,
+        description: currDescription,
+        dueDate: currDueDate,
+        topic: currTopic,
+        status: currStatus,
+      }),
+    });
+
+    if (!res.ok) return;
+
+    const { id } = await res.json();
+    setCurrTasks([
+      ...currTasks,
+      {
+        id,
+        title: currTitle,
+        description: currDescription,
+        dueDate: currDueDate,
+        topic: currTopic,
+        status: currStatus,
+      },
+    ]);
+
+    setTitle("");
+    setDescription("");
+    setDueDate("");
+    setTopic("");
+    setStatus("todo");
+    dialogRef.current.close();
+  }
+
   return (
     <div className={styles.page}>
       <main className={styles.main}>
@@ -46,36 +86,19 @@ export default function Home() {
           <button onClick={() => dialogRef.current.showModal()}>Create </button>
           <dialog ref={dialogRef} className={styles.dialog}>
             <h2>New Task</h2>
-            {/* fields */}
             <label>Title: </label>
-            <input
-              onChange={(event) => {
-                setTitle(event.target.value);
-              }}
-              value={currTitle}
-            />
+            <input value={currTitle}
+              onChange={(event) => {setTitle(event.target.value); }} />
             <label>Description: </label>
-            <input
-              onChange={(event) => {
-                setDescription(event.target.value);
-              }}
-              value={currDescription}
-            />
+            <input value={currDescription}
+              onChange={(event) => {setDescription(event.target.value);}} />
             <label>Due date: </label>
-            <input
-              onChange={(event) => {
-                setDueDate(event.target.value);
-              }}
-              value={currDueDate}
+            <input value={currDueDate}
               type="date"
-            />
+              onChange={(event) => {setDueDate(event.target.value); }} />
             <label>Topic: </label>
-            <input
-              onChange={(event) => {
-                setTopic(event.target.value);
-              }}
-              value={currTopic}
-            />
+            <input value={currTopic}
+              onChange={(event) => {setTopic(event.target.value);}} />
             <label>Status:</label>
 
             {STATUSES.map((s) => (
@@ -90,32 +113,7 @@ export default function Home() {
                 {s}
               </label>
             ))}
-            <button
-              onClick={() => {
-                if (currTitle.trim() !== "" && currDescription.trim()!=="" && currDueDate.trim()!=="" && currTopic.trim()!=="") {
-                  setCurrTasks([
-                    ...currTasks,
-                    {
-                      id: currTasks.length + 1,
-                      title: currTitle,
-                      description: currDescription,
-                      dueDate: currDueDate,
-                      topic: currTopic,
-                      status: currStatus,
-                    },
-                  ]);
-                  setTitle("");
-                  setDescription("");
-                  setDueDate("");
-                  setTopic("");
-                  setStatus("todo");
-                  dialogRef.current.close();
-                }
-              }}
-            >
-              {" "}
-              Add Task{" "}
-            </button>
+            <button onClick= {handleAdd} >Add Task </button>
             <button onClick={() => dialogRef.current.close()}>Cancel</button>
           </dialog>
         </div>
