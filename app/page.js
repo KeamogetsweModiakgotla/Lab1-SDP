@@ -13,6 +13,7 @@ export default function Home() {
   const [currDueDate, setDueDate] = useState("");
   const [currTopic, setTopic] = useState("");
   const [currStatus, setStatus] = useState("todo");
+  const [editingId, setEditingId] = useState(null);
 
 
   const dialogRef = useRef(null);
@@ -23,45 +24,69 @@ export default function Home() {
       .then(setCurrTasks);
   }, []);
 
-  async function handleAdd() {
-    if (currTitle.trim() === "") {
-      return;
-    }
-
-    const res = await fetch("/api/tasks", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        title: currTitle,
-        description: currDescription,
-        dueDate: currDueDate,
-        topic: currTopic,
-        status: currStatus,
-      }),
-    });
-
-    if (!res.ok) return;
-
-    const { id } = await res.json();
-    setCurrTasks([
-      ...currTasks,
-      {
-        id,
-        title: currTitle,
-        description: currDescription,
-        dueDate: currDueDate,
-        topic: currTopic,
-        status: currStatus,
-      },
-    ]);
-
+  function openCreate() {
+    setEditingId(null);
     setTitle("");
     setDescription("");
     setDueDate("");
     setTopic("");
     setStatus("todo");
+    dialogRef.current.showModal();
+  }
+
+  function openEdit(task) {
+    setEditingId(task.id);
+    setTitle(task.title);
+    setDescription(task.description);
+    setDueDate(task.dueDate);
+    setTopic(task.topic);
+    setStatus(task.status);
+    dialogRef.current.showModal();
+  }
+
+  async function handleSubmit() {
+    if (
+      currTitle.trim() === "" ||
+      currDueDate.trim() === "" ||
+      currTopic.trim() === ""
+    ) {
+      return;
+    }
+
+    const payload = {
+      title: currTitle,
+      description: currDescription,
+      dueDate: currDueDate,
+      topic: currTopic,
+      status: currStatus,
+    };
+
+    if (editingId === null) {
+      const res = await fetch("/api/tasks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) return;
+
+      const { id } = await res.json();
+      setCurrTasks([...currTasks, { id, ...payload }]);
+    } else {
+      const res = await fetch(`/api/tasks/${editingId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) return;
+
+      setCurrTasks(
+        currTasks.map((t) => (t.id === editingId ? { ...t, ...payload } : t))
+      );
+    }
+
     dialogRef.current.close();
   }
+
 
   return (
     <div className={styles.page}>
@@ -78,14 +103,18 @@ export default function Home() {
                   <p>Due: {task.dueDate}</p>
                   <p>Topic: {task.topic}</p>
                   <p>Status:{task.status}</p>
+                  <button onClick={() => openEdit(task)}>Edit</button>
                 </details>
               </li>
             ))}
           </ul>
 
-          <button onClick={() => dialogRef.current.showModal()}>Create </button>
+          <button onClick={openCreate}>Create </button>
+
           <dialog ref={dialogRef} className={styles.dialog}>
-            <h2>New Task</h2>
+            <h2>{editingId === null ? "New Task" : "Edit Task"}</h2>
+
+
             <label>Title: </label>
             <input value={currTitle}
               onChange={(event) => {setTitle(event.target.value); }} />
@@ -113,7 +142,8 @@ export default function Home() {
                 {s}
               </label>
             ))}
-            <button onClick= {handleAdd} >Add Task </button>
+            <button onClick= {handleSubmit} >{editingId=== null ?
+            "Add Task" : "Save Changes"} </button>
             <button onClick={() => dialogRef.current.close()}>Cancel</button>
           </dialog>
         </div>

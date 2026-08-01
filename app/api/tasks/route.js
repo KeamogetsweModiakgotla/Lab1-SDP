@@ -13,6 +13,9 @@ export async function POST(request) {
   if (!title?.trim()) {
     return NextResponse.json({ error: "Title is required" }, { status: 400 });
   }
+
+  if (!dueDate?.trim()) return NextResponse.json({ error: "Due date is required" }, { status: 400 });
+  if (!topic?.trim())   return NextResponse.json({ error: "Topic is required" }, { status: 400 });
   if (status && !STATUSES.includes(status)) {
     return NextResponse.json({ error: "Invalid status" }, { status: 400 });
   }
@@ -21,9 +24,9 @@ export async function POST(request) {
 
   const result = addTask(
     title.trim(),
-    description ?? "",
-    dueDate ?? "",
-    topic ?? "",
+    description.trim() ?? "",
+    dueDate.trim() ?? "",
+    topic.trim() ?? "",
     status ?? "todo"
   );
 
