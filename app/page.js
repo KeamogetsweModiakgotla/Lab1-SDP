@@ -18,6 +18,8 @@ export default function Home() {
 
   const dialogRef = useRef(null);
 
+
+  const today = () => new Date().toISOString().slice(0, 10);  
   
 
   useEffect(() => {
@@ -109,11 +111,16 @@ async function refresh() {
 
 
 function renderTask(task) {
+  const isOverdue =
+    !task.archived &&
+    task.status !== "complete" &&
+    task.dueDate < today();
     return (
       <li key={task.id} className={task.archived ? styles.archived : ""}>
         <details>
           <summary>
             {task.title}
+            {isOverdue && <span className={styles.overdue}> Overdue</span>}
             <button
               onClick={(e) => {
                 e.preventDefault();

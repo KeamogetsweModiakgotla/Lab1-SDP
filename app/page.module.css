@@ -155,4 +155,9 @@ a.secondary {
 .archived {
   opacity: 0.5;
 }
+
+.overdue {
+  color: crimson;
+  font-weight: 600;
+}
 }
