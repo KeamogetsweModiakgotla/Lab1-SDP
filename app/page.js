@@ -14,20 +14,27 @@ export default function Home() {
   const [currTopic, setTopic] = useState("");
   const [currStatus, setStatus] = useState("todo");
   const [editingId, setEditingId] = useState(null);
-
-
+  const [sort, setSort] = useState("dueDate");
 
   const dialogRef = useRef(null);
 
+  
+
   useEffect(() => {
-    fetch("/api/tasks")
-      .then((r) => r.json())
-      .then(setCurrTasks);
-  }, []);
+  fetch(`/api/tasks?sort=${sort}`)
+    .then((r) => r.json())
+    .then(setCurrTasks);
+}, [sort]);
 
-  const activeTasks = currTasks.filter((t) => !t.archived);
-  const archivedTasks = currTasks.filter((t) => t.archived);
+const activeTasks = currTasks.filter((t) => !t.archived);
+const archivedTasks = currTasks.filter((t) => t.archived);
 
+async function refresh() {
+    const tasks = await fetch(`/api/tasks?sort=${sort}`).then((r) => r.json());
+    setCurrTasks(tasks);
+  }
+
+  
   function openCreate() {
     setEditingId(null);
     setTitle("");
@@ -65,42 +72,41 @@ export default function Home() {
       status: currStatus,
     };
 
-    if (editingId === null) {
-      const res = await fetch("/api/tasks", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) return;
+    const res =
+      editingId === null
+        ? await fetch("/api/tasks", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          })
+        : await fetch(`/api/tasks/${editingId}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
 
-      const { id } = await res.json();
-      setCurrTasks([...currTasks, { id, ...payload, archived:0 }]);
-    } else {
-      const res = await fetch(`/api/tasks/${editingId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) return;
+    if (!res.ok) return;
 
-      setCurrTasks(
-        currTasks.map((t) => (t.id === editingId ? { ...t, ...payload } : t))
-      );
-    }
-
+    await refresh();
     dialogRef.current.close();
   }
 
+
   async function handleArchive(id,archived) {
-  const res = await fetch(`/api/tasks/${id}`, { method: "PATCH",
-   headers: {"Content-Type": "application/json"},
-   body: JSON.stringify({archived}), 
+  const res = await fetch(`/api/tasks/${id}`, { 
+    method: "PATCH",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({archived}), 
    });
   if (!res.ok) return;
 
   setCurrTasks(currTasks.map((t) => t.id === id ?
   {...t,archived: archived?1:0}:t));
 }
+
+
+
+
 
 function renderTask(task) {
     return (
@@ -136,6 +142,17 @@ function renderTask(task) {
       <main className={styles.main}>
         <div className={styles.intro}>
           <h1>My Study Tasks.</h1>
+
+          <label htmlFor="sort">Sort by: </label>
+          <select
+            id="sort"
+            value={sort}
+            onChange={(e) => setSort(e.target.value)}
+          >
+            <option value="dueDate">Due date</option>
+            <option value="topic">Topic</option>
+            <option value="status">Status</option>
+          </select>
 
           <ul>{activeTasks.map(renderTask)}</ul>
 

@@ -2,8 +2,10 @@ import { NextResponse } from "next/server";
 import { getTasks, addTask } from "@/lib/db";
 import { STATUSES } from "@/lib/constants";
 
-export async function GET() {
-  return NextResponse.json(getTasks());
+export async function GET(request) {
+  const sort = request.nextUrl.searchParams.get("sort");
+  return NextResponse.json(getTasks(sort));
+
 }
 
 export async function POST(request) {
@@ -32,3 +34,4 @@ export async function POST(request) {
 
   return NextResponse.json({ id: result.lastInsertRowid }, { status: 201 });
 }
+
