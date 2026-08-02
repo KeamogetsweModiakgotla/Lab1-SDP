@@ -4,6 +4,8 @@ import styles from "./page.module.css";
 import { STATUSES } from "@/lib/constants";
 import { useState, useRef, useEffect } from "react";
 
+const today = () => new Date().toISOString().slice(0, 10);  
+  
 
 export default function Home() {
 
@@ -19,7 +21,6 @@ export default function Home() {
   const dialogRef = useRef(null);
 
 
-  const today = () => new Date().toISOString().slice(0, 10);  
   
 
   useEffect(() => {
@@ -111,9 +112,7 @@ async function refresh() {
 
 
 function renderTask(task) {
-  const isOverdue =
-    !task.archived &&
-    task.status !== "complete" &&
+  const isOverdue = !task.archived && task.status !== "complete" &&
     task.dueDate < today();
     return (
       <li key={task.id} className={task.archived ? styles.archived : ""}>
@@ -121,7 +120,9 @@ function renderTask(task) {
           <summary>
             {task.title}
             {isOverdue && <span className={styles.overdue}> Overdue</span>}
+            <span className={styles.spacer} />
             <button
+              className={task.archived ? styles.unarchiveBtn : styles.archiveBtn}
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -131,13 +132,17 @@ function renderTask(task) {
               {task.archived ? "Unarchive" : "Archive"}
             </button>
           </summary>
-          <p>{task.description}</p>
-          <p>Due: {task.dueDate}</p>
-          <p>Topic: {task.topic}</p>
-          <p>Status: {task.status}</p>
+
+
+          <div className={styles.details}>             
+            {task.description &&<p>{task.description}</p>}
+          <p><span className={styles.label}>Due:</span> {task.dueDate}</p>
+          <p><span className={styles.label}>Topic:</span> {task.topic}</p>
+          <p><span className={styles.label}>Status:</span> {task.status}</p>
           {!task.archived && (
             <button onClick={() => openEdit(task)}>Edit</button>
           )}
+          </div>
         </details>
       </li>
     );
@@ -147,8 +152,9 @@ function renderTask(task) {
   return (
     <div className={styles.page}>
       <main className={styles.main}>
-        <div className={styles.intro}>
           <h1>My Study Tasks.</h1>
+
+          <div className={styles.sortRow}>
 
           <label htmlFor="sort">Sort by: </label>
           <select
@@ -161,9 +167,21 @@ function renderTask(task) {
             <option value="status">Status</option>
           </select>
 
-          <ul>{activeTasks.map(renderTask)}</ul>
+          <span className={styles.spacer} />
 
-          <button onClick={openCreate}>Create </button>
+        <button className={styles.primary} onClick={openCreate}>
+        + New Task
+        </button>
+        </div>
+
+
+        {activeTasks.length === 0 ? (
+          <p className={styles.empty}>No tasks yet, create one to get started.</p>
+        ) : (
+          <ul>{activeTasks.map(renderTask)}</ul>
+        )}
+
+        
 
           {archivedTasks.length > 0 && (
             <>
@@ -176,21 +194,30 @@ function renderTask(task) {
             <h2>{editingId === null ? "New Task" : "Edit Task"}</h2>
 
 
-            <label>Title: </label>
-            <input value={currTitle}
-              onChange={(event) => {setTitle(event.target.value); }} />
-            <label>Description: </label>
-            <input value={currDescription}
-              onChange={(event) => {setDescription(event.target.value);}} />
-            <label>Due date: </label>
-            <input value={currDueDate}
+            <label  htmlFor="title">Title: </label>
+            <input
+              id="title"
+              value={currTitle}
+              onChange={(e) => {setTitle(e.target.value); }} />
+            <label  htmlFor="description">Description: </label>
+            <input 
+              id="description"
+              value={currDescription}
+              onChange={(e) => {setDescription(e.target.value);}} />
+            <label  htmlFor="dueDate">dueDdate: </label>
+            <input 
+              id="dueDate"
+              value={currDueDate}
               type="date"
-              onChange={(event) => {setDueDate(event.target.value); }} />
-            <label>Topic: </label>
-            <input value={currTopic}
-              onChange={(event) => {setTopic(event.target.value);}} />
-            <label>Status:</label>
+              onChange={(e) => {setDueDate(e.target.value); }} />
+            <label  htmlFor="topic">Topic: </label>
+            <input 
+              id= "topic"
+              value={currTopic}
+              onChange={(e) => {setTopic(e.target.value);}} />
 
+            <label>Status:</label>
+            <div className= {styles.radioGroup}>
             {STATUSES.map((s) => (
               <label key={s}>
                 <input
@@ -203,12 +230,22 @@ function renderTask(task) {
                 {s}
               </label>
             ))}
-            <button onClick= {handleSubmit} >{editingId=== null ?
+            </div>
+
+            <div className={styles.dialogActions}>
+              <button onClick={() => dialogRef.current.close()}>Cancel</button>
+              <button 
+              className={styles.primary}
+              onClick= {handleSubmit} 
+              style={{ marginTop: 0 }}
+              
+              >{editingId=== null ?
             "Add Task" : "Save Changes"} </button>
-            <button onClick={() => dialogRef.current.close()}>Cancel</button>
+            </div>
           </dialog>
-        </div>
+        
       </main>
     </div>
+
   );
 }
