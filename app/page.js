@@ -16,6 +16,7 @@ export default function Home() {
   const [editingId, setEditingId] = useState(null);
 
 
+
   const dialogRef = useRef(null);
 
   useEffect(() => {
@@ -23,6 +24,9 @@ export default function Home() {
       .then((r) => r.json())
       .then(setCurrTasks);
   }, []);
+
+  const activeTasks = currTasks.filter((t) => !t.archived);
+  const archivedTasks = currTasks.filter((t) => t.archived);
 
   function openCreate() {
     setEditingId(null);
@@ -70,7 +74,7 @@ export default function Home() {
       if (!res.ok) return;
 
       const { id } = await res.json();
-      setCurrTasks([...currTasks, { id, ...payload }]);
+      setCurrTasks([...currTasks, { id, ...payload, archived:0 }]);
     } else {
       const res = await fetch(`/api/tasks/${editingId}`, {
         method: "PATCH",
@@ -87,6 +91,45 @@ export default function Home() {
     dialogRef.current.close();
   }
 
+  async function handleArchive(id,archived) {
+  const res = await fetch(`/api/tasks/${id}`, { method: "PATCH",
+   headers: {"Content-Type": "application/json"},
+   body: JSON.stringify({archived}), 
+   });
+  if (!res.ok) return;
+
+  setCurrTasks(currTasks.map((t) => t.id === id ?
+  {...t,archived: archived?1:0}:t));
+}
+
+function renderTask(task) {
+    return (
+      <li key={task.id} className={task.archived ? styles.archived : ""}>
+        <details>
+          <summary>
+            {task.title}
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleArchive(task.id, !task.archived);
+              }}
+            >
+              {task.archived ? "Unarchive" : "Archive"}
+            </button>
+          </summary>
+          <p>{task.description}</p>
+          <p>Due: {task.dueDate}</p>
+          <p>Topic: {task.topic}</p>
+          <p>Status: {task.status}</p>
+          {!task.archived && (
+            <button onClick={() => openEdit(task)}>Edit</button>
+          )}
+        </details>
+      </li>
+    );
+  }
+
 
   return (
     <div className={styles.page}>
@@ -94,22 +137,16 @@ export default function Home() {
         <div className={styles.intro}>
           <h1>My Study Tasks.</h1>
 
-          <ul>
-            {currTasks.map((task) => (
-              <li key={task.id}>
-                <details>
-                  <summary>{task.title}</summary>
-                  <p>{task.description} </p>
-                  <p>Due: {task.dueDate}</p>
-                  <p>Topic: {task.topic}</p>
-                  <p>Status:{task.status}</p>
-                  <button onClick={() => openEdit(task)}>Edit</button>
-                </details>
-              </li>
-            ))}
-          </ul>
+          <ul>{activeTasks.map(renderTask)}</ul>
 
           <button onClick={openCreate}>Create </button>
+
+          {archivedTasks.length > 0 && (
+            <>
+              <h2>Archived Tasks</h2>
+              <ul>{archivedTasks.map(renderTask)}</ul>
+            </>
+          )}
 
           <dialog ref={dialogRef} className={styles.dialog}>
             <h2>{editingId === null ? "New Task" : "Edit Task"}</h2>

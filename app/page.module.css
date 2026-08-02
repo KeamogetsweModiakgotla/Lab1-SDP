@@ -151,4 +151,8 @@ a.secondary {
 @starting-style {
   .dialog[open] { transform: translateY(20px); opacity: 0; }
 }
+
+.archived {
+  opacity: 0.5;
+}
 }
