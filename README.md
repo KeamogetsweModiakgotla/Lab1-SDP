@@ -45,3 +45,6 @@ environment variable, which is created and deleted per run — your own
 
 ---
 
+ChatGPT Transcript https://chatgpt.com/share/6a709b28-657c-83ea-ab78-2857dde81bf9
+CLaude Transcript https://claude.ai/share/54359c4a-8d00-4dbd-83c9-e1b48d00c73a
+
