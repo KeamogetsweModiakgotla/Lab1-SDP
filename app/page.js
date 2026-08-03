@@ -4,6 +4,8 @@ import styles from "./page.module.css";
 import { STATUSES } from "@/lib/constants";
 import { useState, useRef, useEffect } from "react";
 
+import { isOverdue } from "@/lib/overdue";
+
 const today = () => new Date().toISOString().slice(0, 10);  
   
 
@@ -112,14 +114,13 @@ async function refresh() {
 
 
 function renderTask(task) {
-  const isOverdue = !task.archived && task.status !== "complete" &&
-    task.dueDate < today();
+  const overdue = isOverdue(task, today());
     return (
       <li key={task.id} className={task.archived ? styles.archived : ""}>
         <details>
           <summary>
             {task.title}
-            {isOverdue && <span className={styles.overdue}> Overdue</span>}
+            {overdue && <span className={styles.overdue}> Overdue</span>}
             <span className={styles.spacer} />
             <button
               className={task.archived ? styles.unarchiveBtn : styles.archiveBtn}
